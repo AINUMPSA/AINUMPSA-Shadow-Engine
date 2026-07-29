@@ -1,0 +1,11 @@
+{
+  "neo_points": [
+    {"name": "Te Anau", "coef": 0.34, "angle": 225},
+    {"name": "Hicks Bay", "coef": 0.44, "angle": 315},
+    {"name": "2009DB1", "coef": 0.64, "angle": 45},
+    {"name": "2009HA21", "coef": 0.18, "angle": 135},
+    {"name": "2017FX101", "coef": 0.82, "angle": 90}
+  ],
+  "attractor": {"symbol": "0 < 1", "strength": 0.3},
+  "tensor_T": {"value": 0.30, "label": "Cień T-Matrix"}
+}
