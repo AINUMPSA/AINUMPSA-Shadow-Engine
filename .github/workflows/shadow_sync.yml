@@ -1,48 +1,53 @@
-name: Shadow Engine Sync
+name: Shadow Engine Auto-Sync
 
 on:
-  repository_dispatch:  # wywoływane przez webhook z Core
+  repository_dispatch:
     types: [new-core-data]
-  workflow_dispatch:    # ręczne wywołanie
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
 
 jobs:
   shadow-transform:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Pobierz Core repo
+      - name: Checkout Core
         uses: actions/checkout@v4
         with:
           repository: AINUMPSA/core
           path: ./core
           
-      - name: Pobierz Shadow repo
+      - name: Checkout Shadow
         uses: actions/checkout@v4
         with:
           path: ./shadow
           
-      - name: Zainstaluj zależności
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          
+      - name: Install Dependencies
         run: |
           pip install pillow opencv-python numpy
-          sudo apt-get install ffmpeg
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
           
-      - name: Uruchom Shadow Engine
+      - name: Run Shadow Engine
+        env:
+          WALLET: "0x8e504ebd3f1eaa45df87d398b7cbcb823592b324"
+          TIME_TRAVEL: "true"
         run: |
-          python shadow/src/shadow_engine.py \
-            --input ./core/output/latest \
-            --output ./shadow/output \
-            --mode full_invert
+          cd shadow
+          python src/shadow_engine.py --input ../core/output --output ./output
+          python src/generate_assets.py --input ./output --output ./output/assets
           
-      - name: Generuj pliki
-        run: |
-          # JPG, GIF, MP4, VR
-          python shadow/src/generate_assets.py
-          
-      - name: Commit do Shadow repo
+      - name: Commit & Push to Shadow
         run: |
           cd shadow
           git config user.name "Shadow Engine"
           git config user.email "shadow@ainumpsa.xyz"
           git add output/
-          git commit -m "Shadow sync: $(date -u +'%Y-%m-%d %H:%M:%S')"
+          git commit -m "🔄 Shadow Sync: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" || echo "No changes"
           git push
