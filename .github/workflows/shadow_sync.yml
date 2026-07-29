@@ -1,0 +1,48 @@
+name: Shadow Engine Sync
+
+on:
+  repository_dispatch:  # wywoływane przez webhook z Core
+    types: [new-core-data]
+  workflow_dispatch:    # ręczne wywołanie
+
+jobs:
+  shadow-transform:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Pobierz Core repo
+        uses: actions/checkout@v4
+        with:
+          repository: AINUMPSA/core
+          path: ./core
+          
+      - name: Pobierz Shadow repo
+        uses: actions/checkout@v4
+        with:
+          path: ./shadow
+          
+      - name: Zainstaluj zależności
+        run: |
+          pip install pillow opencv-python numpy
+          sudo apt-get install ffmpeg
+          
+      - name: Uruchom Shadow Engine
+        run: |
+          python shadow/src/shadow_engine.py \
+            --input ./core/output/latest \
+            --output ./shadow/output \
+            --mode full_invert
+          
+      - name: Generuj pliki
+        run: |
+          # JPG, GIF, MP4, VR
+          python shadow/src/generate_assets.py
+          
+      - name: Commit do Shadow repo
+        run: |
+          cd shadow
+          git config user.name "Shadow Engine"
+          git config user.email "shadow@ainumpsa.xyz"
+          git add output/
+          git commit -m "Shadow sync: $(date -u +'%Y-%m-%d %H:%M:%S')"
+          git push
