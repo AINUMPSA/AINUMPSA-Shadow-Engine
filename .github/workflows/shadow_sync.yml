@@ -1,53 +1,19 @@
-name: Shadow Engine Auto-Sync
+name: Shadow Sync
 
 on:
-  repository_dispatch:
-    types: [new-core-data]
-  schedule:
-    - cron: '*/30 * * * *'
   workflow_dispatch:
 
 jobs:
-  shadow-transform:
+  build:
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout Core
-        uses: actions/checkout@v4
-        with:
-          repository: AINUMPSA/core
-          path: ./core
-          
-      - name: Checkout Shadow
-        uses: actions/checkout@v4
-        with:
-          path: ./shadow
-          
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-          
-      - name: Install Dependencies
+      - name: Install
         run: |
           pip install pillow opencv-python numpy
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg
-          
       - name: Run Shadow Engine
-        env:
-          WALLET: "0x8e504ebd3f1eaa45df87d398b7cbcb823592b324"
-          TIME_TRAVEL: "true"
         run: |
-          cd shadow
-          python src/shadow_engine.py --input ../core/output --output ./output
-          python src/generate_assets.py --input ./output --output ./output/assets
-          
-      - name: Commit & Push to Shadow
-        run: |
-          cd shadow
-          git config user.name "Shadow Engine"
-          git config user.email "shadow@ainumpsa.xyz"
-          git add output/
-          git commit -m "🔄 Shadow Sync: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" || echo "No changes"
-          git push
+          python src/shadow_engine.py
